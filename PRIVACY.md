@@ -47,7 +47,8 @@ unless they have been sanitized.
 
 - The Claude helper makes network requests to `https://claude.ai` when fetching
   Claude usage data.
-- The Codex reader is local-file based and does not make network requests.
+- The Codex session-limit reader is local-file based. The Sub2API helper makes
+  authenticated requests to the currently configured provider's usage endpoint.
 - TrafficMonitor itself, Windows, Edge, Chrome, Claude, Codex, and related
   services may have their own network behavior outside this plugin.
 
@@ -55,3 +56,13 @@ unless they have been sanitized.
 
 Review this document before each release against the current runtime behavior,
 helper files, and release asset contents.
+
+## Codex API Key Usage (Sub2API)
+
+The optional Sub2API helper reads the current `auth.json` and `config.toml` from
+`CODEX_HOME` (default `%USERPROFILE%\.codex`). It sends the API key as a Bearer
+credential only to the configured HTTPS provider's usage endpoint. Redirects
+are rejected. It does not use Cockpit browser storage or upload session logs.
+The local `codex-api-usage.ini` cache contains formatted usage, status, timestamp,
+and a SHA-256 configuration fingerprint; it does not store the API key or raw
+response. See [setup and limitations](docs/sub2api.md).

@@ -33,9 +33,9 @@ The plugin puts Claude and Codex usage limits in that fixed taskbar location, in
    - Download an official release from [TrafficMonitor Releases](https://github.com/zhongyang219/TrafficMonitor/releases)
    - Extract it anywhere you want, then run `TrafficMonitor.exe`
    - If you do not need temperature monitoring, the Lite package is usually enough
-2. Download the plugin zip that matches the installed TrafficMonitor build from the [latest release](https://github.com/bemaru/trafficmonitor-ai-usage-plugin/releases/latest):
-   - `TrafficMonitorAIUsageLimits_v0.3.13_x64.zip` for `x64` TrafficMonitor
-   - `TrafficMonitorAIUsageLimits_v0.3.13_x86.zip` for `x86` TrafficMonitor
+2. Download the plugin zip that matches the installed TrafficMonitor build from this [fork prerelease](https://github.com/R0sin/trafficmonitor-ai-usage-plugin/releases/tag/v0.3.13-sub2api.1):
+   - `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.1_x64.zip` for `x64` TrafficMonitor
+   - `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.1_x86.zip` for `x86` TrafficMonitor
 3. Extract the zip into the TrafficMonitor folder, the folder that contains `TrafficMonitor.exe`.
    After extraction, the layout should look like this:
 
@@ -83,6 +83,16 @@ For the full screenshot walkthrough, see [docs/install.md](docs/install.md).
 
 ## Data Sources
 
+### Codex API Key Accounts (Sub2API)
+
+This fork adds `Codex API 5h`, `Codex API 1d`, `Codex API 7d`, and
+`Codex API Key Quota` as used-percentage bars (`A5h`, `A1d`, `A7d`, `AKey`).
+See [Sub2API setup and limitations](docs/sub2api.md).
+The helper uses Node.js 22+ on PATH (the same runtime as the Claude helper) and follows the current file-based
+Codex account in `CODEX_HOME` without depending on Cockpit's cache.
+
+### Existing Limit Sources
+
 - Claude reads a fresh helper snapshot from `%LOCALAPPDATA%\trafficmonitor-claude-usage-plugin\claude-web-usage.json`
 - Claude helper login stores cookies in a dedicated local browser profile; see [PRIVACY.md](PRIVACY.md)
 - Codex reads local state from `%USERPROFILE%\.codex\sessions\**\*.jsonl`
@@ -116,6 +126,10 @@ Requirements:
 - MSVC `v143` toolset
 - MFC for the `v143` toolset
 - Windows SDK selected by Visual Studio
+
+Node.js 22+ and npm must be on PATH. MSBuild automatically installs the locked
+helper dependencies and bundles the API helper into a single `.mjs` file.
+No manual npm step or deployment of `node_modules` is needed.
 
 Build with Visual Studio or run:
 

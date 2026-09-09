@@ -38,3 +38,4 @@ Desktop.ini
 
 # Helper dependencies
 helper/claude-web-helper/node_modules/
+helper/codex-api-usage/node_modules/

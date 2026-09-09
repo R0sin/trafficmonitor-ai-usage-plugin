@@ -6,6 +6,8 @@
 #include <string>
 
 #include "PluginInterface.h"
+#include "../src/ClaudeUsagePlugin/CodexApiUsageData.h"
+#include <ctime>
 
 namespace
 {
@@ -98,6 +100,129 @@ bool ExpectValue(IPluginItem* item, const wchar_t* expected, const wchar_t* labe
 
 int wmain(int argc, wchar_t* argv[])
 {
+    if ((argc == 2 && std::wstring(argv[1]) == L"api-snapshot")
+        || (argc == 3 && std::wstring(argv[2]) == L"api-bars"))
+    {
+        const auto root = std::filesystem::temp_directory_path() /
+            (L"codex-api-snapshot-test-" + std::to_wstring(GetCurrentProcessId()));
+        const auto cache_dir = root / L"trafficmonitor-claude-usage-plugin";
+        std::filesystem::create_directories(cache_dir);
+        std::ofstream(root / L"auth.json") << "{}";
+        std::ofstream(root / L"config.toml") << "";
+        SetEnvironmentVariableW(L"CODEX_HOME", root.c_str());
+        SetEnvironmentVariableW(L"LOCALAPPDATA", root.c_str());
+        const auto cache = cache_dir / L"codex-api-usage.ini";
+        const auto write = [&](const wchar_t* key, const std::wstring& value) {
+            WritePrivateProfileStringW(L"usage", key, value.c_str(), cache.c_str());
+        };
+        write(L"version", L"2");
+        write(L"fingerprint", L"44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a");
+        write(L"updated", std::to_wstring(std::time(nullptr)));
+        write(L"status", L"OK");
+        write(L"five_hour_percentage", L"12.5");
+        write(L"five_hour_detail", L"API key: 2.50 / 20.00 USD; resets 2026-09-09T12:00:00.000Z");
+        write(L"one_day_percentage", L"0.0");
+        write(L"seven_day_percentage", L"100.0");
+        write(L"total_percentage", L"25.0");
+        if (argc == 3)
+        {
+            HMODULE module = LoadLibraryW(argv[1]);
+            const auto get_instance = module ? reinterpret_cast<GetPluginInstance>(GetProcAddress(module, "TMPluginGetInstance")) : nullptr;
+            if (!get_instance) return 2;
+            ITMPlugin* plugin = get_instance();
+            plugin->DataRequired();
+            Sleep(2100);
+            plugin->DataRequired();
+            BITMAPINFO info{};
+            info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            info.bmiHeader.biWidth = 800;
+            info.bmiHeader.biHeight = -64;
+            info.bmiHeader.biPlanes = 1;
+            info.bmiHeader.biBitCount = 32;
+            info.bmiHeader.biCompression = BI_RGB;
+            void* pixels{};
+            HDC dc = CreateCompatibleDC(nullptr);
+            HBITMAP bitmap = CreateDIBSection(dc, &info, DIB_RGB_COLORS, &pixels, nullptr, 0);
+            const auto old_bitmap = SelectObject(dc, bitmap);
+            HFONT font = CreateFontW(-14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+                OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Segoe UI");
+            const auto old_font = SelectObject(dc, font);
+            const wchar_t* expected[] = { L"12.5%", L"0%", L"100%", L"25%" };
+            const wchar_t* ids[] = { L"CodexApi5Hours", L"CodexApi1Day", L"CodexApi7Days", L"CodexApiTotal" };
+            bool passed = plugin->GetItem(8) == nullptr;
+            for (int theme = 0; theme < 2; ++theme)
+            {
+                RECT row{ 0, theme * 32, 800, (theme + 1) * 32 };
+                HBRUSH background = CreateSolidBrush(theme ? RGB(24, 24, 24) : RGB(255, 255, 255));
+                FillRect(dc, &row, background);
+                DeleteObject(background);
+                for (int index = 0; index < 4; ++index)
+                {
+                    auto* item = plugin->GetItem(4 + index);
+                    passed = passed && ExpectValue(item, expected[index], ids[index]);
+                    if (!item) continue;
+                    passed = passed && item->IsCustomDraw() && std::wstring(item->GetItemId()) == ids[index]
+                        && item->GetItemWidthEx(dc) <= 200;
+                    item->DrawItem(dc, index * 200, theme * 32, 200, 32, theme != 0);
+                    passed = passed && GetPixel(dc, index * 200 + 5, theme * 32 + 5)
+                        != (theme ? RGB(24, 24, 24) : RGB(255, 255, 255));
+                }
+            }
+            GdiFlush();
+            BITMAPFILEHEADER header{};
+            header.bfType = 0x4d42;
+            header.bfOffBits = sizeof(header) + sizeof(info.bmiHeader);
+            header.bfSize = header.bfOffBits + 800 * 64 * 4;
+            const auto image_path = std::filesystem::path(argv[1]).parent_path() / L"api-bars-test.bmp";
+            std::ofstream image(image_path, std::ios::binary);
+            image.write(reinterpret_cast<const char*>(&header), sizeof(header));
+            image.write(reinterpret_cast<const char*>(&info.bmiHeader), sizeof(info.bmiHeader));
+            image.write(static_cast<const char*>(pixels), 800 * 64 * 4);
+            SelectObject(dc, old_font);
+            SelectObject(dc, old_bitmap);
+            DeleteObject(font);
+            DeleteObject(bitmap);
+            DeleteDC(dc);
+            std::filesystem::remove_all(root);
+            std::wcout << (passed ? L"PASS" : L"FAIL") << L" api-bars\n";
+            return passed ? 0 : 1;
+        }
+        auto& data = CCodexApiUsageData::Instance();
+        data.RefreshIfNeeded();
+        Sleep(2100);
+        data.RefreshIfNeeded();
+        bool passed = data.GetValueText(0) == L"12.5%" && data.GetValueText(1) == L"0%"
+            && data.GetValueText(2) == L"100%" && data.GetValueText(3) == L"25%"
+            && data.GetMetric(0).available && data.GetMetric(0).percentage == 12.5
+            && data.GetTooltipText().find(L"resets 2026-09-09") != std::wstring::npos;
+        write(L"five_hour_percentage", L"NaN");
+        write(L"one_day_percentage", L"101");
+        write(L"seven_day_percentage", L"12oops");
+        write(L"total_percentage", L"");
+        Sleep(1100);
+        data.RefreshIfNeeded();
+        for (int i = 0; i < 4; ++i)
+            passed = passed && !data.GetMetric(i).available && data.GetValueText(i) == L"--";
+        write(L"five_hour_percentage", L"12.5");
+        write(L"updated", std::to_wstring(std::time(nullptr) - 181));
+        Sleep(1100);
+        data.RefreshIfNeeded();
+        passed = passed && data.GetValueText(0) == L"--";
+        write(L"updated", std::to_wstring(std::time(nullptr)));
+        write(L"status", L"Usage HTTP 401");
+        Sleep(1100);
+        data.RefreshIfNeeded();
+        passed = passed && data.GetValueText(0) == L"--"
+            && data.GetTooltipText().find(L"401") != std::wstring::npos;
+        write(L"status", L"OK");
+        std::ofstream(root / L"auth.json") << "{\"account\":\"different\"}";
+        Sleep(1100);
+        data.RefreshIfNeeded();
+        passed = passed && data.GetValueText(0) == L"--";
+        std::filesystem::remove_all(root);
+        std::wcout << (passed ? L"PASS" : L"FAIL") << L" api-snapshot\n";
+        return passed ? 0 : 1;
+    }
     if (argc != 3)
     {
         std::wcerr << L"Usage: CodexUsagePluginTests.exe <plugin-dll> <scenario>\n";

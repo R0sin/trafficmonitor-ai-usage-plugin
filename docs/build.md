@@ -8,8 +8,16 @@
 - MSVC `v143` toolset
 - MFC for the `v143` toolset (`UseOfMfc=Dynamic`)
 - Windows SDK selected by Visual Studio
+- Node.js 22+ and npm on PATH
 
 ## Build
+
+MSBuild automatically runs `npm ci` and bundles the API helper with its TOML
+parser using esbuild. No separate npm command is needed. The first build needs
+access to the npm registry; later builds can reuse npm's download cache.
+Only `codex-api-usage.mjs` and its license notice are shipped for this helper,
+without `node_modules`. End users need Node.js 22+, but do not run npm.
+See [Sub2API](sub2api.md).
 
 Open `ClaudeUsagePlugin.sln` in Visual Studio and build `Release|x64` or `Release|Win32`, or run:
 

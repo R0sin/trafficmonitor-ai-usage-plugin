@@ -1,0 +1,9 @@
+{
+  "name": "trafficmonitor-codex-api-usage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "dependencies": { "smol-toml": "1.8.0" },
+  "devDependencies": { "esbuild": "0.28.2" }
+}

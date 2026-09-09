@@ -2,6 +2,7 @@
 
 #include "ClaudeUsageData.h"
 #include "CodexUsageData.h"
+#include "CodexApiUsageData.h"
 #include "PluginInterface.h"
 
 class CClaudeUsageItem : public IPluginItem
@@ -44,6 +45,25 @@ private:
     mutable std::wstring m_value_text_cache;
 };
 
+class CCodexApiUsageItem : public IPluginItem
+{
+public:
+    explicit CCodexApiUsageItem(int index) : m_index(index) {}
+    const wchar_t* GetItemName() const override;
+    const wchar_t* GetItemId() const override;
+    const wchar_t* GetItemLableText() const override;
+    const wchar_t* GetItemValueText() const override;
+    const wchar_t* GetItemValueSampleText() const override;
+    bool IsCustomDraw() const override { return true; }
+    int GetItemWidth() const override { return 96; }
+    int GetItemWidthEx(void* hDC) const override;
+    void DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mode) override;
+
+private:
+    int m_index;
+    mutable std::wstring m_value_text_cache;
+};
+
 class CClaudeUsagePlugin : public ITMPlugin
 {
 private:
@@ -63,6 +83,10 @@ private:
     CClaudeUsageItem m_seven_day_item{ ClaudeUsageWindow::Rolling7Days };
     CCodexUsageItem m_codex_five_hour_item{ CodexUsageWindow::Rolling5Hours };
     CCodexUsageItem m_codex_seven_day_item{ CodexUsageWindow::Rolling7Days };
+    CCodexApiUsageItem m_codex_api_five_hour_item{ 0 };
+    CCodexApiUsageItem m_codex_api_one_day_item{ 1 };
+    CCodexApiUsageItem m_codex_api_seven_day_item{ 2 };
+    CCodexApiUsageItem m_codex_api_total_item{ 3 };
     std::wstring m_tooltip_text_cache;
 };
 

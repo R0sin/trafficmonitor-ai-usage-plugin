@@ -1,5 +1,9 @@
 # TrafficMonitor AI Usage Limits
 
+此 fork 新增 Sub2API 的 5h、1d、7d 和 API key 总额度进度条，支持跟随
+Cockpit 切换后的 Codex 文件配置。复用 Node.js 22+，无需 Python；详见
+[Sub2API 配置与限制](docs/sub2api.md)。
+
 ![Platform](https://img.shields.io/badge/platform-Windows-0078D4)
 ![TrafficMonitor](https://img.shields.io/badge/TrafficMonitor-plugin-2EA043)
 ![Arch](https://img.shields.io/badge/arch-x64%20%7C%20x86-555555)
@@ -33,9 +37,9 @@
    - 从 [TrafficMonitor Releases](https://github.com/zhongyang219/TrafficMonitor/releases) 下载官方版本。
    - 解压到任意目录，然后运行 `TrafficMonitor.exe`。
    - 如果不需要温度监控，通常 Lite 包就够用。
-2. 从 [latest release](https://github.com/bemaru/trafficmonitor-ai-usage-plugin/releases/latest) 下载与已安装 TrafficMonitor 架构匹配的插件 zip。
-   - `x64` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13_x64.zip`
-   - `x86` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13_x86.zip`
+2. 从 [fork 预发布版](https://github.com/R0sin/trafficmonitor-ai-usage-plugin/releases/tag/v0.3.13-sub2api.1) 下载与已安装 TrafficMonitor 架构匹配的插件 zip。
+   - `x64` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.1_x64.zip`
+   - `x86` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.1_x86.zip`
 3. 将 zip 解压到包含 `TrafficMonitor.exe` 的 TrafficMonitor 文件夹中。
    解压后的结构应如下所示。
 
