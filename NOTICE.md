@@ -25,6 +25,13 @@ The Claude web helper under `helper/claude-web-helper` uses Node.js built-in
 modules only. Its `package-lock.json` currently records no third-party npm
 runtime packages.
 
+The Codex API helper under `helper/codex-api-usage` uses Node.js built-in
+modules and [smol-toml](https://github.com/squirrelchat/smol-toml) 1.8.0
+(BSD-3-Clause) for TOML parsing. The parser is bundled into
+`ClaudeUsagePlugin/helper/codex-api-usage.mjs`; its upstream license is shipped
+alongside it as `codex-api-usage.LICENSE.txt`. esbuild is a build-only dependency
+and is not included in the release package.
+
 ## Service Names
 
 Claude, Anthropic, Codex, OpenAI, Windows, Microsoft Edge, Google Chrome, and

@@ -477,6 +477,7 @@
     <ClInclude Include="..\..\include\PluginInterface.h" />
     <ClInclude Include="ClaudeUsageData.h" />
     <ClInclude Include="CodexUsageData.h" />
+    <ClInclude Include="CodexApiUsageData.h" />
     <ClInclude Include="ClaudeUsagePlugin.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
@@ -484,6 +485,9 @@
   <ItemGroup>
     <ClCompile Include="ClaudeUsageData.cpp" />
     <ClCompile Include="CodexUsageData.cpp" />
+    <ClCompile Include="CodexApiUsageData.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="ClaudeUsagePlugin.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -504,6 +508,9 @@
     <ClaudeHelperAsset Include="$(RepoRoot)scripts\claude-web-helper.ps1">
       <Destination>$(OutDir)ClaudeUsagePlugin\claude-web-helper.ps1</Destination>
     </ClaudeHelperAsset>
+    <ClaudeHelperAsset Include="$(RepoRoot)scripts\codex-api-helper.ps1">
+      <Destination>$(OutDir)ClaudeUsagePlugin\codex-api-helper.ps1</Destination>
+    </ClaudeHelperAsset>
     <ClaudeHelperAsset Include="$(RepoRoot)helper\claude-web-helper\index.mjs">
       <Destination>$(OutDir)ClaudeUsagePlugin\helper\claude-web-helper\index.mjs</Destination>
     </ClaudeHelperAsset>
@@ -515,7 +522,12 @@
     </ClaudeHelperAsset>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Target Name="CopyClaudeHelperAssets" AfterTargets="Build">
+  <Target Name="BundleCodexApiHelper">
+    <Exec WorkingDirectory="$(RepoRoot)helper\codex-api-usage" Command="npm.cmd ci --include=dev --ignore-scripts --no-audit --no-fund" />
+    <Exec WorkingDirectory="$(RepoRoot)helper\codex-api-usage" Command="node build.mjs &quot;$(OutDir)ClaudeUsagePlugin\helper&quot;" />
+    <RemoveDir Directories="$(OutDir)ClaudeUsagePlugin\helper\codex-api-usage" />
+  </Target>
+  <Target Name="CopyClaudeHelperAssets" AfterTargets="Build" DependsOnTargets="BundleCodexApiHelper">
     <Delete Files="$(OutDir)claude-web-helper.ps1" />
     <RemoveDir Directories="$(OutDir)helper" />
     <MakeDir Directories="$(OutDir)ClaudeUsagePlugin\helper\claude-web-helper" />

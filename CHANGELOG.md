@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.3.13-sub2api.1 - 2026-09-09
+
+### Added
+- Sub2API 5h, 1d, 7d and API key total quota bars (A5h, A1d, A7d, AKey).
+- Daily and weekly subscription quota fallback with explicit scope in tooltips.
+- Node.js helper following the active Codex file-based API key account, with account-change detection and expiring snapshots.
+- Tests for quota parsing, snapshot validation, account switching and DLL rendering.
+
+### Changed
+- MSBuild now installs locked helper dependencies and bundles the API helper into a single file; release packages do not need node_modules.
+- This fork prerelease is based on upstream 0.3.13 and requires Node.js 22+ for Sub2API usage.
+
 ## 0.3.13 - 2026-07-28
 
 ### Added

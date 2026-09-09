@@ -296,6 +296,54 @@ void CCodexUsageItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_
     DrawUsageItemBar(pDC, colors, GetItemLableText(), value_text.c_str(), GetItemValueSampleText(), metric.available, GetUsageRatio(metric), x, y, w, h);
 }
 
+const wchar_t* CCodexApiUsageItem::GetItemName() const
+{
+    static const wchar_t* names[] = { L"Codex API 5h", L"Codex API 1d", L"Codex API 7d", L"Codex API Key Quota" };
+    return names[m_index];
+}
+
+const wchar_t* CCodexApiUsageItem::GetItemId() const
+{
+    static const wchar_t* ids[] = { L"CodexApi5Hours", L"CodexApi1Day", L"CodexApi7Days", L"CodexApiTotal" };
+    return ids[m_index];
+}
+
+const wchar_t* CCodexApiUsageItem::GetItemLableText() const
+{
+    static const wchar_t* labels[] = { L"A5h", L"A1d", L"A7d", L"AKey" };
+    return labels[m_index];
+}
+
+const wchar_t* CCodexApiUsageItem::GetItemValueText() const
+{
+    m_value_text_cache = g_codex_api_usage_data.GetValueText(m_index);
+    return m_value_text_cache.c_str();
+}
+
+const wchar_t* CCodexApiUsageItem::GetItemValueSampleText() const
+{
+    return L"100.0%";
+}
+
+int CCodexApiUsageItem::GetItemWidthEx(void* hDC) const
+{
+    CDC* pDC = CDC::FromHandle(static_cast<HDC>(hDC));
+    if (pDC == nullptr) return GetItemWidth();
+    const int padding = 4, gap = 4, accent_width = 3, bar_min_width = 20;
+    return padding * 2 + accent_width + gap + MeasureTextWidth(pDC, GetItemLableText())
+        + gap + bar_min_width + gap + MeasureTextWidth(pDC, GetItemValueSampleText());
+}
+
+void CCodexApiUsageItem::DrawItem(void* hDC, int x, int y, int w, int h, bool dark_mode)
+{
+    CDC* pDC = CDC::FromHandle(static_cast<HDC>(hDC));
+    if (pDC == nullptr || w <= 0 || h <= 0) return;
+    const auto metric = g_codex_api_usage_data.GetMetric(m_index);
+    const auto colors = GetCodexDrawColors(m_index == 0 ? CodexUsageWindow::Rolling5Hours : CodexUsageWindow::Rolling7Days, dark_mode);
+    DrawUsageItemBar(pDC, colors, GetItemLableText(), metric.text.c_str(), GetItemValueSampleText(),
+        metric.available, static_cast<float>(metric.percentage / 100.0), x, y, w, h);
+}
+
 CClaudeUsagePlugin& CClaudeUsagePlugin::Instance()
 {
     static CClaudeUsagePlugin instance;
@@ -314,6 +362,14 @@ IPluginItem* CClaudeUsagePlugin::GetItem(int index)
         return &m_codex_five_hour_item;
     case 3:
         return &m_codex_seven_day_item;
+    case 4:
+        return &m_codex_api_five_hour_item;
+    case 5:
+        return &m_codex_api_one_day_item;
+    case 6:
+        return &m_codex_api_seven_day_item;
+    case 7:
+        return &m_codex_api_total_item;
     default:
         return nullptr;
     }
@@ -329,6 +385,7 @@ void CClaudeUsagePlugin::DataRequired()
 {
     g_claude_usage_data.RefreshIfNeeded();
     g_codex_usage_data.RefreshIfNeeded();
+    g_codex_api_usage_data.RefreshIfNeeded();
 }
 
 const wchar_t* CClaudeUsagePlugin::GetInfo(PluginInfoIndex index)
@@ -340,7 +397,7 @@ const wchar_t* CClaudeUsagePlugin::GetInfo(PluginInfoIndex index)
         value = L"AI Usage Limits";
         break;
     case TMI_DESCRIPTION:
-        value = L"Shows Claude and Codex usage limit percentages.";
+        value = L"Shows Claude, Codex and Sub2API usage limit percentages.";
         break;
     case TMI_AUTHOR:
         value = L"bemaru";
@@ -349,10 +406,10 @@ const wchar_t* CClaudeUsagePlugin::GetInfo(PluginInfoIndex index)
         value = L"Copyright (C) 2026";
         break;
     case TMI_VERSION:
-        value = L"0.3.13";
+        value = L"0.3.13-sub2api.1";
         break;
     case TMI_URL:
-        value = L"https://github.com/bemaru/trafficmonitor-ai-usage-plugin";
+        value = L"https://github.com/R0sin/trafficmonitor-ai-usage-plugin";
         break;
     default:
         value.clear();
@@ -365,12 +422,14 @@ const wchar_t* CClaudeUsagePlugin::GetTooltipInfo()
 {
     g_claude_usage_data.RefreshIfNeeded();
     g_codex_usage_data.RefreshIfNeeded();
+    g_codex_api_usage_data.RefreshIfNeeded();
 
     m_tooltip_text_cache = g_claude_usage_data.GetTooltipText();
     const std::wstring codex_tooltip = g_codex_usage_data.GetTooltipText();
     if (!m_tooltip_text_cache.empty() && !codex_tooltip.empty())
         m_tooltip_text_cache += L"\n\n";
     m_tooltip_text_cache += codex_tooltip;
+    m_tooltip_text_cache += L"\n\n" + g_codex_api_usage_data.GetTooltipText();
     return m_tooltip_text_cache.c_str();
 }
 

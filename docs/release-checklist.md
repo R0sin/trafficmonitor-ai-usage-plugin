@@ -23,12 +23,17 @@ The owner decides when the repository or release becomes public. Do not create p
    - `ClaudeUsagePlugin.dll`
    - `ClaudeUsagePlugin\claude-web-helper.ps1`
    - `ClaudeUsagePlugin\helper\claude-web-helper\...`
+   - `ClaudeUsagePlugin\codex-api-helper.ps1`
+   - `ClaudeUsagePlugin\helper\codex-api-usage.mjs`
+   - `ClaudeUsagePlugin\helper\codex-api-usage.LICENSE.txt`
 8. Confirm the release zip includes `LICENSE`, `NOTICE.md`, and `PRIVACY.md`
    at the zip root.
 
 ## Package assets
 
 Create one zip per architecture from the built `plugins` output.
+Include only the DLL and required helper files, not `.lib`, `.exp`, `.pdb`,
+test images or `node_modules`.
 
 - Recommended asset names:
   - `TrafficMonitorAIUsageLimits_v<version>_x64.zip`
@@ -44,7 +49,10 @@ plugins
 ├─ ClaudeUsagePlugin.dll
 └─ ClaudeUsagePlugin
    ├─ claude-web-helper.ps1
+   ├─ codex-api-helper.ps1
    └─ helper
+      ├─ codex-api-usage.mjs
+      ├─ codex-api-usage.LICENSE.txt
       └─ claude-web-helper
          ├─ index.mjs
          ├─ package.json
@@ -68,5 +76,5 @@ same version.
 1. Test the `x64` asset with an official `x64` TrafficMonitor install.
 2. Confirm TrafficMonitor loads `AI Usage Limits`.
 3. Confirm `Claude 5h`, `Claude 7d`, `Codex 5h`, and `Codex 7d` appear in display settings.
-4. Confirm the tooltip shows localized reset times.
+4. Confirm `Codex API 5h`, `Codex API 1d`, `Codex API 7d` and `Codex API Key Quota` appear. Sub2API reset times use UTC; existing limit tooltips retain their original time formatting.
 5. Confirm Claude becomes unavailable if the helper snapshot is stale instead of showing stale values forever.
