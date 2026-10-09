@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.3.13-sub2api.2 - 2026-10-09
+
+### Fixed
+- Sub2API usage remains available when an OAuth binding coexists with a custom provider API key.
+- Read the active provider's `experimental_bearer_token` first, falling back to `auth.json` `OPENAI_API_KEY` only when absent. OAuth-only auth files no longer hide provider API keys.
+- Report a missing custom provider address explicitly; retain HTTPS, redirect, profile and environment-key safeguards.
+
+### Added
+- Regression coverage for mixed OAuth/API key credentials, provider bearer precedence and invalid credentials.
+
 ## 0.3.13-sub2api.1 - 2026-09-09
 
 ### Added

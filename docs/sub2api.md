@@ -27,8 +27,11 @@
    若安装过本 fork 的旧测试版，需要重新选择显示项，原来的余额／请求／Token 项已移除。
 
 插件读取 `%USERPROFILE%\.codex`，也支持 `CODEX_HOME`。
-helper 从 `auth.json` 的 `OPENAI_API_KEY` 和 `config.toml` 当前
-`model_provider` 对应的 `base_url` 获取配置，无需重复保存密钥。
+helper 从 `config.toml` 当前 `model_provider` 对应的 `base_url` 获取地址，
+优先读取该 provider 的 `experimental_bearer_token`，未配置时读取
+`auth.json` 的 `OPENAI_API_KEY`，无需重复保存密钥。
+是否可查询由当前 provider 地址和有效 API key 决定，不以 `auth_mode` 判断账号类型。
+允许同时绑定 OAuth（例如用于生图）；查询用量仍使用 API key，不使用 OAuth token。
 例如基础地址 `https://www.sub2api.com/v1` 对应 `GET https://www.sub2api.com/v1/usage`，
 通过 `Authorization: Bearer <API key>` 认证。
 基础地址只有域名时，首先请求 `/usage`，仅在 404 时尝试 `/v1/usage`。
@@ -60,8 +63,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\codex-api-helper.p
   不包含 API key、原始响应或服务商地址。
 - 支持 HTTPS，拒绝跳转，避免将密钥转发到另一个地址。
 - 第一版支持文件中的 API key 和当前顶层 provider 配置。
-  兼容 Cockpit 在 provider 中重复写入同一密钥的 `experimental_bearer_token`。
-  暂不支持系统凭据库、provider 的环境变量密钥覆盖、与 auth.json 不同的 bearer token、
+  支持 OAuth 绑定时仅在 provider 的 `experimental_bearer_token` 中保存 API key。
+  暂不支持系统凭据库、provider 的环境变量密钥覆盖、
   profile 选择和 Cockpit 本地网关转发配置。此类配置需要后续单独适配。
 - 原有 `X5h` / `X7d` 仍读取会话日志，与 Sub2API 服务商设置的额度不同，
   使用 API key 时请启用新项目。

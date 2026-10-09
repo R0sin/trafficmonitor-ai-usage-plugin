@@ -21,16 +21,16 @@ export async function readState(root) {
 export function resolveAccount(authBytes, configBytes) {
   const auth = JSON.parse(authBytes.toString('utf8').replace(/^\uFEFF/, ''));
   const config = parse(configBytes.toString('utf8').replace(/^\uFEFF/, ''));
-  if (auth.auth_mode != null && auth.auth_mode !== 'apikey') {
-    throw new UsageError('Current account is not an API key account');
-  }
-  const key = auth.OPENAI_API_KEY;
-  if (typeof key !== 'string' || !key.trim()) throw new UsageError('No file-based Codex API key');
+  // OAuth may coexist with a custom provider's API key (for example, for image generation).
   const provider = config.model_providers?.[config.model_provider] ?? {};
   if (config.profile) throw new UsageError('Codex profile overrides are not supported');
-  // Cockpit may repeat the same key in the provider table during a switch.
-  if (provider.env_key || (provider.experimental_bearer_token != null && provider.experimental_bearer_token !== key)) {
+  if (provider.env_key) {
     throw new UsageError('Provider key overrides are not supported');
+  }
+  const key = provider.experimental_bearer_token ?? auth.OPENAI_API_KEY;
+  if (typeof key !== 'string' || !key.trim()) throw new UsageError('No file-based Codex API key');
+  if (typeof provider.base_url !== 'string' || !provider.base_url.trim()) {
+    throw new UsageError('A custom HTTPS provider base_url is required');
   }
   const url = new URL(provider.base_url);
   if (url.protocol !== 'https:' || !url.hostname || url.username || url.password) {

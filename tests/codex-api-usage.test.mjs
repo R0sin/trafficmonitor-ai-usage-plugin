@@ -38,11 +38,37 @@ test('TOML account resolution and Sub2API metrics', () => {
   assert.deepEqual(summarize({ quota: { limit: 100, used: -1 } }), {});
   assert.deepEqual(summarize({ quota: { limit: 100, remaining: 50 } }), {});
   assert.deepEqual(summarize({ quota: { limit: 100, used: 5, unlimited: true } }), {});
-  assert.throws(() => resolveAccount(Buffer.from('{"auth_mode":"chatgpt","OPENAI_API_KEY":"old"}'), config), UsageError);
   for (const invalid of [config.toString().replace('https:', 'http:'),
-    `${config}env_key = "KEY"\n`, `${config}experimental_bearer_token = "other"\n`]) {
+    `${config}env_key = "KEY"\n`]) {
     assert.throws(() => resolveAccount(auth, Buffer.from(invalid)), UsageError);
   }
+});
+
+test('custom provider API key remains usable with an OAuth binding', () => {
+  const mixedAuth = Buffer.from(JSON.stringify({
+    auth_mode: 'chatgpt', OPENAI_API_KEY: 'test-secret',
+    tokens: { access_token: 'oauth-secret' },
+  }));
+  assert.deepEqual(resolveAccount(mixedAuth, config), {
+    key: 'test-secret', urls: ['https://example.com/v1/usage'],
+  });
+  assert.equal(resolveAccount(mixedAuth, Buffer.from(`${config}experimental_bearer_token = "test-secret"\n`)).key,
+    'test-secret');
+  assert.throws(() => resolveAccount(mixedAuth, Buffer.from('model_provider = "openai"\n')), UsageError);
+  assert.throws(() => resolveAccount(Buffer.from('{"auth_mode":"chatgpt","tokens":{"access_token":"oauth-secret"}}'), config), UsageError);
+});
+
+test('provider bearer token supplies the API key when auth.json contains only OAuth', () => {
+  const oauth = Buffer.from('{"auth_mode":"chatgpt","tokens":{"access_token":"oauth-secret"}}');
+  const providerConfig = Buffer.from(`${config}experimental_bearer_token = "provider-secret"\n`);
+  assert.deepEqual(resolveAccount(oauth, providerConfig), {
+    key: 'provider-secret', urls: ['https://example.com/v1/usage'],
+  });
+  assert.equal(resolveAccount(auth, providerConfig).key, 'provider-secret');
+  for (const token of ['""', '" "', '123', 'false']) {
+    assert.throws(() => resolveAccount(auth, Buffer.from(`${config}experimental_bearer_token = ${token}\n`)), UsageError);
+  }
+  assert.throws(() => resolveAccount(oauth, Buffer.from(`${providerConfig}env_key = "KEY"\n`)), UsageError);
 });
 
 test('subscription fallback keeps daily/weekly scope separate from key limits', () => {
@@ -120,7 +146,7 @@ test('account switching, sanitized failures, atomic UTF-16 snapshot and Windows 
     if (process.platform === 'win32') {
       assert.equal(launched.status, 0, launched.stderr);
       const output = await readFile(join(root, 'trafficmonitor-claude-usage-plugin', 'codex-api-usage.ini'), 'utf16le');
-      assert.ok(output.includes('Current account is not an API key account'));
+      assert.ok(output.includes('No file-based Codex API key'));
     }
   } finally {
     await rm(root, { recursive: true, force: true });
