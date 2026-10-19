@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.3.13-sub2api.4 - 2026-10-19
+
+### Fixed
+- Use the same percentage text in Sub2API tooltips and taskbar items: at most one decimal place, omitting `.0` for integers.
+- Preserve reset countdowns, local timestamps, and compact amounts on a separate line.
+
 ## 0.3.13-sub2api.3 - 2026-10-19
 
 ### Fixed

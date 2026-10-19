@@ -198,7 +198,7 @@ int wmain(int argc, wchar_t* argv[])
             && data.GetMetric(0).available && data.GetMetric(0).percentage == 12.5
             && data.GetTooltipText().find(L"(resets in 1h 59m at ") != std::wstring::npos
             && data.GetTooltipText().find(L"(resets now at ") != std::wstring::npos
-            && data.GetTooltipText().find(L"5h: 13% (resets ") != std::wstring::npos
+            && data.GetTooltipText().find(L"5h: 12.5% (resets ") != std::wstring::npos
             && data.GetTooltipText().find(L"Updated") == std::wstring::npos
             && data.GetTooltipText().find(L")\n2.50/20.00 USD\n") != std::wstring::npos
             && data.GetTooltipText().find(L"used") == std::wstring::npos

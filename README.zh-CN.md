@@ -37,9 +37,9 @@ Cockpit 切换后的 Codex 文件配置。复用 Node.js 22+，无需 Python；�
    - 从 [TrafficMonitor Releases](https://github.com/zhongyang219/TrafficMonitor/releases) 下载官方版本。
    - 解压到任意目录，然后运行 `TrafficMonitor.exe`。
    - 如果不需要温度监控，通常 Lite 包就够用。
-2. 从 [fork 预发布版](https://github.com/R0sin/trafficmonitor-ai-usage-plugin/releases/tag/v0.3.13-sub2api.3) 下载与已安装 TrafficMonitor 架构匹配的插件 zip。
-   - `x64` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.3_x64.zip`
-   - `x86` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.3_x86.zip`
+2. 从 [fork 预发布版](https://github.com/R0sin/trafficmonitor-ai-usage-plugin/releases/tag/v0.3.13-sub2api.4) 下载与已安装 TrafficMonitor 架构匹配的插件 zip。
+   - `x64` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.4_x64.zip`
+   - `x86` TrafficMonitor 使用 `TrafficMonitorAIUsageLimits_v0.3.13-sub2api.4_x86.zip`
 3. 将 zip 解压到包含 `TrafficMonitor.exe` 的 TrafficMonitor 文件夹中。
    解压后的结构应如下所示。
 

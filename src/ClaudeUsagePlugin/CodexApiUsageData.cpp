@@ -152,8 +152,7 @@ void CCodexApiUsageData::RefreshIfNeeded()
                         swprintf_s(text, percentage == std::floor(percentage) ? L"%.0f%%" : L"%.1f%%", percentage);
                         metric.text = text;
                     }
-                    m_tooltip += L"\n" + std::wstring(labels[index]) + L": "
-                        + (metric.available ? std::to_wstring(std::lround(metric.percentage)) + L"%" : metric.text);
+                    m_tooltip += L"\n" + std::wstring(labels[index]) + L": " + metric.text;
                     if (metric.available)
                     {
                         const auto reset_value = Field(cache, (std::wstring(prefixes[index]) + L"_reset_at").c_str());
