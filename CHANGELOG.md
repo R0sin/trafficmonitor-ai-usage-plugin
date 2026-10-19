@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 0.3.13-sub2api.3 - 2026-10-19
+
+### Fixed
+- Show subscription weekly reset times from Sub2API's `weekly_window_start` plus seven days.
+
+### Changed
+- Display Sub2API reset countdowns and local timestamps using the same formatting as Codex.
+- Simplify Sub2API tooltips: round displayed percentages to integers, remove update age and source labels, and move compact `used/limit USD` amounts to a separate line.
+- Keep taskbar percentage precision and cache expiry validation unchanged.
+
+### Added
+- Regression coverage for reset parsing, subscription/key scope separation, and compact multiline tooltips.
+
 ## 0.3.13-sub2api.2 - 2026-10-09
 
 ### Fixed

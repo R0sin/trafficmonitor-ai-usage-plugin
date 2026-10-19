@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CodexUsageData.h"
+#include "UsageResetTime.h"
 
 #include <algorithm>
 #include <cmath>
@@ -369,94 +370,6 @@ bool TryParseIso8601UtcSeconds(const std::string& timestamp, long long& unix_sec
     return true;
 }
 
-bool UnixSecondsToLocalText(long long unix_seconds, std::wstring& text)
-{
-    if (unix_seconds < 0)
-        return false;
-
-    FILETIME file_time{};
-    ULARGE_INTEGER value{};
-    value.QuadPart = (static_cast<unsigned long long>(unix_seconds) + 11644473600ULL) * 10000000ULL;
-    file_time.dwLowDateTime = value.LowPart;
-    file_time.dwHighDateTime = value.HighPart;
-
-    SYSTEMTIME utc_time{};
-    if (!FileTimeToSystemTime(&file_time, &utc_time))
-        return false;
-
-    SYSTEMTIME local_time{};
-    if (!SystemTimeToTzSpecificLocalTime(nullptr, &utc_time, &local_time))
-        return false;
-
-    const int date_length = GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &local_time, nullptr, nullptr, 0, nullptr);
-    if (date_length <= 1)
-        return false;
-
-    const int time_length = GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &local_time, nullptr, nullptr, 0);
-    if (time_length <= 1)
-        return false;
-
-    std::wstring date_text(static_cast<size_t>(date_length - 1), L'\0');
-    std::wstring time_text(static_cast<size_t>(time_length - 1), L'\0');
-    if (GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &local_time, nullptr, &date_text[0], date_length, nullptr) == 0)
-        return false;
-    if (GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &local_time, nullptr, &time_text[0], time_length) == 0)
-        return false;
-
-    text = date_text;
-    text += L" ";
-    text += time_text;
-    return true;
-}
-
-std::wstring FormatDurationFromSeconds(unsigned long long total_seconds)
-{
-    if (total_seconds < 60ULL)
-        return L"<1m";
-
-    const unsigned long long total_minutes = total_seconds / 60ULL;
-    const unsigned long long days = total_minutes / (24ULL * 60ULL);
-    const unsigned long long hours = (total_minutes / 60ULL) % 24ULL;
-    const unsigned long long minutes = total_minutes % 60ULL;
-
-    std::wstring text;
-    if (days > 0)
-    {
-        text = std::to_wstring(days) + L"d";
-        if (hours > 0)
-            text += L" " + std::to_wstring(hours) + L"h";
-        return text;
-    }
-
-    if (hours > 0)
-    {
-        text = std::to_wstring(hours) + L"h";
-        if (minutes > 0)
-            text += L" " + std::to_wstring(minutes) + L"m";
-        return text;
-    }
-
-    return std::to_wstring(minutes) + L"m";
-}
-
-std::wstring FormatResetRemaining(long long reset_at_unix_seconds)
-{
-    FILETIME now_file_time{};
-    GetSystemTimeAsFileTime(&now_file_time);
-
-    ULARGE_INTEGER now_value{};
-    now_value.LowPart = now_file_time.dwLowDateTime;
-    now_value.HighPart = now_file_time.dwHighDateTime;
-    if (now_value.QuadPart < 116444736000000000ULL)
-        return std::wstring();
-
-    const long long now_unix_seconds = static_cast<long long>((now_value.QuadPart - 116444736000000000ULL) / 10000000ULL);
-    if (reset_at_unix_seconds <= now_unix_seconds)
-        return L"now";
-
-    return L"in " + FormatDurationFromSeconds(static_cast<unsigned long long>(reset_at_unix_seconds - now_unix_seconds));
-}
-
 std::wstring FormatPercentage(double value)
 {
     const double clamped = (value < 0.0 ? 0.0 : (value > 100.0 ? 100.0 : value));
@@ -480,7 +393,7 @@ std::wstring BuildMetricTooltip(const wchar_t* label, const CCodexUsageData::Met
     }
 
     text += FormatPercentage(metric.percentage);
-    const std::wstring reset_remaining = (metric.has_reset_time ? FormatResetRemaining(metric.reset_at_unix_seconds) : std::wstring());
+    const std::wstring reset_remaining = (metric.has_reset_time ? UsageResetTime::FormatResetRemaining(metric.reset_at_unix_seconds) : std::wstring());
     if (!reset_remaining.empty() && !metric.reset_time_text.empty())
     {
         text += L" (resets ";
@@ -539,7 +452,7 @@ bool LoadMetricFromRateLimitsSection(const std::string& section_json, const char
         metric.has_reset_time = true;
         metric.reset_at_unix_seconds = reset_at;
         std::wstring reset_text;
-        if (UnixSecondsToLocalText(reset_at, reset_text))
+        if (UsageResetTime::UnixSecondsToLocalText(reset_at, reset_text))
             metric.reset_time_text = reset_text;
         else
             metric.reset_time_text = std::to_wstring(reset_at);

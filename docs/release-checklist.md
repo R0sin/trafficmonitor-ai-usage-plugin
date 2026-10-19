@@ -76,5 +76,5 @@ same version.
 1. Test the `x64` asset with an official `x64` TrafficMonitor install.
 2. Confirm TrafficMonitor loads `AI Usage Limits`.
 3. Confirm `Claude 5h`, `Claude 7d`, `Codex 5h`, and `Codex 7d` appear in display settings.
-4. Confirm `Codex API 5h`, `Codex API 1d`, `Codex API 7d` and `Codex API Key Quota` appear. Sub2API reset times use UTC; existing limit tooltips retain their original time formatting.
+4. Confirm `Codex API 5h`, `Codex API 1d`, `Codex API 7d` and `Codex API Key Quota` appear. Sub2API reset times show countdowns and local timestamps, matching Codex.
 5. Confirm Claude becomes unavailable if the helper snapshot is stale instead of showing stale values forever.

@@ -56,16 +56,17 @@ function number(value) {
 export function summarize(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new UsageError('Unsupported usage response');
   const metrics = {};
-  const add = (prefix, limitValue, usedValue, reset, source, unit = 'USD') => {
+  const add = (prefix, limitValue, usedValue, reset, unit = 'USD') => {
     const limit = number(limitValue);
     const used = number(usedValue);
     if (limit === null || limit <= 0 || used === null || used < 0) return;
     if (typeof unit !== 'string' || !/^[A-Za-z]{1,8}$/.test(unit)) return;
     const percentage = used >= limit ? 100 : used / limit * 100;
     metrics[`${prefix}_percentage`] = percentage.toFixed(1);
-    let detail = `${source}: ${used.toFixed(2)} / ${limit.toFixed(2)} ${unit}`;
+    const detail = `${used.toFixed(2)}/${limit.toFixed(2)} ${unit}`;
     if (typeof reset === 'string' && Number.isFinite(Date.parse(reset))) {
-      detail += `; resets ${new Date(reset).toISOString()}`;
+      const seconds = Math.floor(Date.parse(reset) / 1000);
+      if (seconds > 0 && seconds <= 253402300799) metrics[`${prefix}_reset_at`] = String(seconds);
     }
     metrics[`${prefix}_detail`] = detail;
   };
@@ -73,17 +74,24 @@ export function summarize(body) {
   if (Array.isArray(body.rate_limits)) {
     for (const entry of body.rate_limits) {
       const prefix = windows[entry?.window];
-      if (prefix) add(prefix, entry.limit, entry.used, entry.reset_at, 'API key');
+      if (prefix) add(prefix, entry.limit, entry.used, entry.reset_at);
     }
   }
   // Key limits and subscription limits are different scopes. Do not mix them in quota_limited mode.
   if (body.mode !== 'quota_limited' && body.subscription) {
     const sub = body.subscription;
-    if (!('one_day_percentage' in metrics)) add('one_day', sub.daily_limit_usd, sub.daily_usage_usd, null, 'Subscription');
-    if (!('seven_day_percentage' in metrics)) add('seven_day', sub.weekly_limit_usd, sub.weekly_usage_usd, null, 'Subscription');
+    if (!('one_day_percentage' in metrics)) add('one_day', sub.daily_limit_usd, sub.daily_usage_usd, null);
+    if (!('seven_day_percentage' in metrics)) {
+      // Sub2API subscription weeks reset seven days after the server's window start.
+      const start = typeof sub.weekly_window_start === 'string' ? Date.parse(sub.weekly_window_start) : NaN;
+      const reset = start + 7 * 24 * 60 * 60 * 1000;
+      const resetAt = Number.isFinite(reset) && start > 0 && reset <= 253402300799000
+        ? new Date(reset).toISOString() : null;
+      add('seven_day', sub.weekly_limit_usd, sub.weekly_usage_usd, resetAt);
+    }
   }
   if (body.quota && body.quota.unlimited !== true) {
-    add('total', body.quota.limit, body.quota.used, null, 'API key total', body.quota.unit ?? 'USD');
+    add('total', body.quota.limit, body.quota.used, null, body.quota.unit ?? 'USD');
   }
   return metrics;
 }

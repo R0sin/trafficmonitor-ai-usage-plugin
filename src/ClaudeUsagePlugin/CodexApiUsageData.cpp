@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "CodexApiUsageData.h"
+#include "UsageResetTime.h"
 
 #include <bcrypt.h>
 #include <ctime>
@@ -151,13 +152,23 @@ void CCodexApiUsageData::RefreshIfNeeded()
                         swprintf_s(text, percentage == std::floor(percentage) ? L"%.0f%%" : L"%.1f%%", percentage);
                         metric.text = text;
                     }
-                    m_tooltip += L"\n" + std::wstring(labels[index]) + L": " + metric.text;
+                    m_tooltip += L"\n" + std::wstring(labels[index]) + L": "
+                        + (metric.available ? std::to_wstring(std::lround(metric.percentage)) + L"%" : metric.text);
                     if (metric.available)
-                        m_tooltip += L" used; " + Field(cache, (std::wstring(prefixes[index]) + L"_detail").c_str());
+                    {
+                        const auto reset_value = Field(cache, (std::wstring(prefixes[index]) + L"_reset_at").c_str());
+                        wchar_t* reset_end{};
+                        const auto reset_at = _wcstoi64(reset_value.c_str(), &reset_end, 10);
+                        std::wstring reset_text;
+                        if (!reset_value.empty() && *reset_end == 0 && reset_at > 0 && reset_at <= 253402300799LL
+                            && UsageResetTime::UnixSecondsToLocalText(reset_at, reset_text))
+                            m_tooltip += L" (resets " + UsageResetTime::FormatResetRemaining(reset_at) + L" at " + reset_text + L")";
+                        const auto detail = Field(cache, (std::wstring(prefixes[index]) + L"_detail").c_str());
+                        if (!detail.empty()) m_tooltip += L"\n" + detail;
+                    }
                     else
                         m_tooltip += L" (limit unavailable)";
                 }
-                m_tooltip += L"\nUpdated " + std::to_wstring(age) + L"s ago";
             }
         }
         else m_tooltip += L": snapshot expired";

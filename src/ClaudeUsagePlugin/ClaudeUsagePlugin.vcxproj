@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM64EC">
@@ -478,6 +478,7 @@
     <ClInclude Include="ClaudeUsageData.h" />
     <ClInclude Include="CodexUsageData.h" />
     <ClInclude Include="CodexApiUsageData.h" />
+    <ClInclude Include="UsageResetTime.h" />
     <ClInclude Include="ClaudeUsagePlugin.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />

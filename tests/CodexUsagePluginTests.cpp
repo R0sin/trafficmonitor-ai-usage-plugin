@@ -120,7 +120,9 @@ int wmain(int argc, wchar_t* argv[])
         write(L"updated", std::to_wstring(std::time(nullptr)));
         write(L"status", L"OK");
         write(L"five_hour_percentage", L"12.5");
-        write(L"five_hour_detail", L"API key: 2.50 / 20.00 USD; resets 2026-09-09T12:00:00.000Z");
+        write(L"five_hour_detail", L"2.50/20.00 USD");
+        write(L"five_hour_reset_at", std::to_wstring(std::time(nullptr) + 7200));
+        write(L"seven_day_reset_at", L"1");
         write(L"one_day_percentage", L"0.0");
         write(L"seven_day_percentage", L"100.0");
         write(L"total_percentage", L"25.0");
@@ -194,7 +196,13 @@ int wmain(int argc, wchar_t* argv[])
         bool passed = data.GetValueText(0) == L"12.5%" && data.GetValueText(1) == L"0%"
             && data.GetValueText(2) == L"100%" && data.GetValueText(3) == L"25%"
             && data.GetMetric(0).available && data.GetMetric(0).percentage == 12.5
-            && data.GetTooltipText().find(L"resets 2026-09-09") != std::wstring::npos;
+            && data.GetTooltipText().find(L"(resets in 1h 59m at ") != std::wstring::npos
+            && data.GetTooltipText().find(L"(resets now at ") != std::wstring::npos
+            && data.GetTooltipText().find(L"5h: 13% (resets ") != std::wstring::npos
+            && data.GetTooltipText().find(L"Updated") == std::wstring::npos
+            && data.GetTooltipText().find(L")\n2.50/20.00 USD\n") != std::wstring::npos
+            && data.GetTooltipText().find(L"used") == std::wstring::npos
+            && data.GetTooltipText().find(L"1d: 0%\n") != std::wstring::npos;
         write(L"five_hour_percentage", L"NaN");
         write(L"one_day_percentage", L"101");
         write(L"seven_day_percentage", L"12oops");

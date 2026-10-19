@@ -10,7 +10,7 @@
 | Codex API Key Quota | AKey | API key 总额度已用百分比 |
 
 百分比为 `used / limit * 100`，进度条最多填满 100%。悬浮提示显示
-已用／上限、额度所属范围，以及服务端提供的重置时间（UTC）。
+整数百分比、重置倒计时与本地时间（与 Codex 一致），下一行显示 `已用/上限 USD`，不显示更新时间或额度来源字样。
 不再显示钱包余额、请求数和 Token 数。
 原有 Claude 和 Codex 百分比显示项的 ID 和顺序不变。
 
@@ -49,8 +49,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\codex-api-helper.p
   `reset_at` 存在时显示重置时间；窗口以服务端为准，不假定为自然日或自然周。
 - 订阅模式下，如果没有对应的 key 周期限额，日／周条使用
   `subscription.daily_limit_usd` / `daily_usage_usd` 及
-  `weekly_limit_usd` / `weekly_usage_usd`。提示中明确标记 Subscription。
-  `quota_limited` 模式不会混入订阅额度，也不猜测订阅重置时间。
+  `weekly_limit_usd` / `weekly_usage_usd`。
+  订阅周重置时间按服务端 `weekly_window_start` 加 7 天计算；缺少有效窗口起点时不显示。
+  `quota_limited` 模式不会混入订阅额度或订阅重置时间。
 - 总额度条仅使用 `quota.limit` / `quota.used`，不会将余额或 `remaining` 视作总额度。
 - 没有正数上限、缺少已用值或声明无限额时显示 `--`，不会当成 0%。
   纯钱包模式可能没有任何可显示的额度条。

@@ -29,8 +29,12 @@ test('TOML account resolution and Sub2API metrics', () => {
   assert.equal(metrics.one_day_percentage, '0.0');
   assert.equal(metrics.seven_day_percentage, '100.0');
   assert.equal(metrics.total_percentage, '25.0');
-  assert.ok(metrics.five_hour_detail.includes('2026-09-09T12:00:00.000Z'));
-  assert.ok(metrics.seven_day_detail.includes('120.00 / 100.00 USD'));
+  assert.equal(metrics.five_hour_reset_at, String(Date.parse('2026-09-09T12:00:00Z') / 1000));
+  assert.equal(metrics.five_hour_detail, '2.50/20.00 USD');
+  for (const reset_at of [null, '', 'invalid', '1960-01-01T00:00:00Z', '+010000-01-01T00:00:00Z']) {
+    assert.equal(summarize({ rate_limits: [{ window: '5h', limit: 20, used: 2, reset_at }] }).five_hour_reset_at, undefined);
+  }
+  assert.ok(metrics.seven_day_detail.includes('120.00/100.00 USD'));
   assert.deepEqual(summarize({ balance: 12, remaining: 8, usage: { today: { requests: 1 } } }), {});
   for (const value of [null, true, '', ' ', 'NaN', 'Infinity', [], {}, 0, -1]) {
     assert.deepEqual(summarize({ quota: { limit: value, used: 5 } }), {});
@@ -76,12 +80,33 @@ test('subscription fallback keeps daily/weekly scope separate from key limits', 
   const metrics = summarize({ mode: 'unrestricted', subscription });
   assert.equal(metrics.one_day_percentage, '50.0');
   assert.equal(metrics.seven_day_percentage, '30.0');
-  assert.ok(metrics.one_day_detail.startsWith('Subscription:'));
+  assert.equal(metrics.one_day_detail, '10.00/20.00 USD');
   assert.equal(metrics.five_hour_percentage, undefined);
   assert.equal(metrics.total_percentage, undefined);
   assert.deepEqual(summarize({ mode: 'quota_limited', subscription }), {});
   assert.equal(summarize({ subscription, rate_limits: [{ window: '1d', limit: 10, used: 2 }] }).one_day_percentage, '20.0');
   assert.deepEqual(summarize({ rate_limits: [null, { window: '30d', limit: 1, used: 1 }] }), {});
+});
+
+test('subscription weekly reset follows its seven-day window without mixing key limits', () => {
+  const subscription = {
+    weekly_limit_usd: 200, weekly_usage_usd: 109,
+    weekly_window_start: '2026-10-15T15:58:07.422626+08:00',
+    expires_at: '2027-03-08T11:25:38+08:00',
+  };
+  const metrics = summarize({ mode: 'unrestricted', subscription });
+  assert.equal(metrics.seven_day_reset_at, String(Date.parse('2026-10-22T15:58:07+08:00') / 1000));
+  assert.equal(metrics.seven_day_percentage, '54.5');
+  for (const weekly_window_start of [undefined, null, '', 'invalid', 123, '+275760-09-13T00:00:00.000Z']) {
+    const invalid = summarize({ subscription: { ...subscription, weekly_window_start } });
+    assert.equal(invalid.seven_day_reset_at, undefined);
+    assert.equal(invalid.seven_day_percentage, '54.5');
+  }
+  assert.deepEqual(summarize({ mode: 'quota_limited', subscription }), {});
+  const keyLimit = { window: '7d', limit: 100, used: 10 };
+  assert.equal(summarize({ subscription, rate_limits: [keyLimit] }).seven_day_reset_at, undefined);
+  assert.equal(summarize({ subscription, rate_limits: [{ ...keyLimit, reset_at: '2026-10-20T00:00:00Z' }] }).seven_day_reset_at,
+    String(Date.parse('2026-10-20T00:00:00Z') / 1000));
 });
 
 test('HTTP fallback, authentication, redirect rejection and response size', async () => {
